@@ -33,7 +33,7 @@ export interface UserData {
 })
 export class HomeComponent {
 
-  baseUrl = 'http://127.0.0.1:8087/';
+  baseUrl = 'https://chat-backend-7t9p.onrender.com/';
 
   private http = inject(HttpClient);
   selectedChat: any = null
@@ -48,7 +48,7 @@ export class HomeComponent {
   tttt: any
 
   ngOnInit() {
-    this.http.get('http://127.0.0.1:8087/chats').subscribe({
+    this.http.get('https://chat-backend-7t9p.onrender.com/chats').subscribe({
       next: (data: any) => {
         this.chats = data.map((item: any) => (
           {
@@ -69,7 +69,7 @@ export class HomeComponent {
       }
     });
 
-    this.http.get('http://127.0.0.1:8087/users').subscribe({
+    this.http.get('https://chat-backend-7t9p.onrender.com/users').subscribe({
       next: (data: any) => {
         this.users = data;
         this.isLoadingUsers = false;
@@ -110,7 +110,7 @@ export class HomeComponent {
     };
 
     if (this.newUserChat) {
-      this.http.post(`http://127.0.0.1:8087/chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
+      this.http.post(`https://chat-backend-7t9p.onrender.com/chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
         next: (data: any) => {
           this.tttt = data.user;
 
@@ -121,7 +121,7 @@ export class HomeComponent {
           };
 
           // После создания чата сразу отправляем сообщение
-          this.http.post(`http://127.0.0.1:8087/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
+          this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
             next: (response: any) => {
               console.log(response);
 
@@ -143,7 +143,7 @@ export class HomeComponent {
         error: (err) => console.error('Ошибка при создании чата:', err),
       });
     } else {
-      this.http.post(`http://127.0.0.1:8087/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
+      this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
         next: (response: any) => {
           this.selectedChat.messages.push(response);
           this.input = '';
@@ -156,7 +156,7 @@ export class HomeComponent {
 
   filterChats(type: string) {
     // this.isLoadingChats = true;
-    // this.http.get(`http://127.0.0.1:8087/chats?type=${type}`).subscribe({
+    // this.http.get(`https://chat-backend-7t9p.onrender.com/chats?type=${type}`).subscribe({
     //   next: (data: any) => {
     //     this.chats = data;
     //     console.log(data)
