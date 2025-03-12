@@ -1,0 +1,19 @@
+<div class="w-full mb-2 py-1 flex justify-between items-center text-white cursor-pointer transition duration-300 hover:bg-[linear-gradient(152deg,_#1E2939,_#2C3E50_60%,_#3B5171)] hover:text-[#E0F2FF]">
+  <div class="relative">
+    <img alt="" class="w-10 h-10 rounded-full" [src]="data.avatar">
+    <span *ngIf="type === 'chat'">
+      <span *ngIf="data.status" class="bottom-0 left-7 absolute w-3.5 h-3.5 bg-green-400 border-2 border-white dark:border-gray-800 rounded-full"></span>
+      <span *ngIf="!data.status" class="bottom-0 left-7 absolute w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full"></span>
+    </span>
+  </div>
+  <div class="flex-1 mx-2">
+    <h4><b>{{data.firstName}} {{data.lastName}}</b></h4>
+    <p class="w-[160px] truncate">{{data.lastMessage}}</p>
+  </div>
+  <div *ngIf="type == 'chat'" class="w-20">
+    <div>{{data.lastMessageDate}}</div>
+    <div class="float-end relative">
+      <div *ngIf="data.messageCount" class="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full dark:border-gray-900">{{data.messageCount}}</div>
+    </div>
+  </div>
+</div>

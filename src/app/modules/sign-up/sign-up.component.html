@@ -1,0 +1,42 @@
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+    <form [formGroup]="signUpForm" (ngSubmit)="register()" class="space-y-4">
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-900">Username</label>
+        <input id="username" type="text" formControlName="username" required
+               class="block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 transition duration-200">
+        <div *ngIf="signUpForm.get('username')?.invalid && signUpForm.get('username')?.touched" class="text-red-500 text-sm mt-1">
+          Username is required (min 3 characters)
+        </div>
+      </div>
+
+      <div>
+        <label for="phone_number" class="block text-sm font-medium text-gray-900">Phone Number</label>
+        <input id="phone_number" type="text" formControlName="phone_number" required
+               class="block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 transition duration-200">
+        <div *ngIf="signUpForm.get('phone_number')?.invalid && signUpForm.get('phone_number')?.touched" class="text-red-500 text-sm mt-1">
+          Enter a valid phone number
+        </div>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-900">Password</label>
+        <input id="password" type="password" formControlName="password" required
+               class="block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 transition duration-200">
+        <div *ngIf="signUpForm.get('password')?.invalid && signUpForm.get('password')?.touched" class="text-red-500 text-sm mt-1">
+          Password must be at least 6 characters
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="signUpForm.invalid"
+              class="mt-4 flex w-full justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white text-sm font-semibold shadow-sm hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-300 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+        Register
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-gray-500">
+      Already have an account?
+      <a routerLink="/login" class="font-semibold text-indigo-600 hover:text-indigo-500 transition duration-200">Login</a>
+    </p>
+  </div>
+</div>
