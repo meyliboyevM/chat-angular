@@ -1,21 +1,28 @@
+
+
+
+
 <div class="flex h-screen bg-gray-900 text-white">
   <!-- Left Sidebar -->
   <div class="w-1/18 bg-gray-800 p-4 border-r border-gray-700 flex flex-col items-center">
     <h2 class="text-xl font-semibold mb-4">Меню</h2>
     <div class="space-y-4 flex flex-col items-center">
-      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('all')">
+<!--      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('all')">-->
+      <div class="flex flex-col items-center p-2 rounded-lg" (click)="filterChats('all')">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11M9 21V3m3 18V3" />
         </svg>
         <span class="text-sm">All</span>
       </div>
-      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('new')">
+<!--      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('new')">-->
+      <div class="flex flex-col items-center p-2 rounded-lg" (click)="filterChats('new')">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         <span class="text-sm">New</span>
       </div>
-      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('personal')">
+<!--      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700" (click)="filterChats('personal')">-->
+      <div class="flex flex-col items-center p-2 rounded-lg" (click)="filterChats('personal')">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
@@ -29,6 +36,7 @@
     <h2 class="text-xl font-semibold mb-2">Чаты</h2>
     <div class="overflow-auto flex-1" style="max-height: 60vh;">
       <div *ngIf="isLoadingChats" class="text-center">Загрузка чатов...</div>
+      <div *ngIf="!chats.length && !isLoadingChats" class="text-center">Пусто</div>
       <div *ngFor="let item of chats" class="p-2 rounded-lg cursor-pointer hover:bg-gray-700"
            [ngClass]="{'bg-gray-700': selectedChat === item}"
            (click)="selectItem(item,false)">
@@ -61,24 +69,54 @@
 
   <!-- Chat Window -->
   <div class="flex flex-col flex-1 bg-gray-900">
-    <div class="p-4 border-b border-gray-700 bg-gray-800">
-      <h2 class="text-lg font-semibold">{{ message_obj?.user?.username || 'Выберите чат' }}</h2>
+    @if (isLoadingMessages) {
+      <div class="flex justify-center items-center h-screen bg-gray-900">
+        <svg class="w-16 h-16 animate-spin text-blue-500" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+    } @else {
+
+    <div class="px-4 py-2 border-b border-gray-700 bg-gray-800 flex justify-between">
+      <h2 class="text-lg font-semibold">{{ message_obj?.user?.username || message_obj?.username || 'Выберите чат' }}</h2>
+      <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer text-red-500/50 hover:bg-gray-700" (click)="logout()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 12H3m11 0l-4-4m4 4l-4 4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16V8m0-4h4v16h-4"/>
+        </svg>
+      </div>
     </div>
-    <div class="flex-1 overflow-auto p-2 space-y-2">
-      <div *ngFor="let msg of message_obj?.messages"
+
+    <div #messagesContainer class="flex-1 overflow-auto p-6 space-y-2">
+      <div *ngFor="let msg of message_obj?.messages" #lastMessage
            [ngClass]="{'bg-indigo-700 bg-opacity-50 text-white ml-auto': msg.user_id !== selectedChat.id, 'bg-gray-700': msg.user_id === selectedChat.id}"
            class="p-2 rounded-lg max-w-xs">
         <div class="text-xs text-gray-300 text-right">{{ msg.created_at ? (msg.created_at | date:'hh:mm a') : '' }}</div>
         {{ msg.message }}
       </div>
     </div>
-    <div class="p-4 border-t border-gray-700 bg-gray-800 flex gap-2">
-      <input [(ngModel)]="input" placeholder="Введите сообщение..." class="flex-1 bg-gray-700 text-white p-2 rounded border-none" />
-      <button (click)="sendMessage()" class="bg-blue-500 text-white p-2 rounded cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m0 0L9 8m6 4l-6 4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+
+    <form (ngSubmit)="sendMessage()" class="p-4 border-t border-gray-700 bg-gray-800 flex gap-2">
+      <input #messageInput [disabled]="sending || !chats.length" [(ngModel)]="input" name="message"
+             class="flex-1 bg-gray-700 text-white p-2 rounded border-none"
+             placeholder="Введите сообщение..."/>
+
+      <button class="bg-blue-500 text-white p-2 rounded cursor-pointer" type="submit" [disabled]="sending || !chats.length">
+        <svg *ngIf="!sending" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12h6m0 0L9 8m6 4l-6 4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="sending" class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+          <path d="M4 12a8 8 0 018-8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-    </div>
+    </form>
+    }
   </div>
 </div>

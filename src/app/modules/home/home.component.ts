@@ -1,4 +1,4 @@
-import {Component, inject, signal, WritableSignal} from '@angular/core';
+import {Component, ElementRef, inject, ViewChild} from '@angular/core';
 import {DatePipe, NgClass, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {HttpClient} from '@angular/common/http';
@@ -33,6 +33,9 @@ export interface UserData {
 })
 export class HomeComponent {
 
+  @ViewChild('messageInput') messageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+
   baseUrl = 'https://chat-backend-7t9p.onrender.com/';
 
   private http = inject(HttpClient);
@@ -44,8 +47,9 @@ export class HomeComponent {
   isLoadingUsers = true;
   isLoadingChats = true;
   message_obj: any = [];
-  filteredList: any = [...this.chats];
-  tttt: any
+  sending: boolean = false
+  isLoadingMessages: boolean = true;
+  isAtBottom = true;
 
   ngOnInit() {
     this.http.get('https://chat-backend-7t9p.onrender.com/chats').subscribe({
@@ -59,9 +63,11 @@ export class HomeComponent {
             last_message: item['messages'].length > 0 ? item['messages'].at(-1).message : null
           }));
         this.isLoadingChats = false;
-        console.log(this.chats[0])
         this.message_obj = this.chats[0]
         this.selectedChat = this.chats[0];
+        this.isLoadingMessages = false;
+        this.scrollToBottom(); // Прокрутка вниз при загрузке
+
       },
       error: err => {
         console.error(err);
@@ -91,11 +97,11 @@ export class HomeComponent {
 
   selectItem(item: any, type: boolean) {
     this.newUserChat = type
-    if (type) {
-      console.log(item)
-    }
-    console.log(item)
       this.selectedChat = item;
+    if (type) {
+      this.chats.push(item)
+      this.users = this.users.filter((el: any) => el.id !== item.id);
+    }
       this.message_obj = {
         user: {id: item.id, phone_number: item['phone_number'],username: item['username']},
         messages: item['messages']
@@ -104,6 +110,7 @@ export class HomeComponent {
 
   sendMessage() {
     if (this.input.trim() === '') return;
+    this.sending = true
 
     const body = {
       message: this.input,
@@ -112,7 +119,6 @@ export class HomeComponent {
     if (this.newUserChat) {
       this.http.post(`https://chat-backend-7t9p.onrender.com/chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
         next: (data: any) => {
-          this.tttt = data.user;
 
           // Создаём объект чата
           this.message_obj = {
@@ -123,19 +129,16 @@ export class HomeComponent {
           // После создания чата сразу отправляем сообщение
           this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
             next: (response: any) => {
-              console.log(response);
-
-              // Добавляем новое сообщение в массив
+              this.sending = false
               this.message_obj = {
                 ...this.message_obj,
                 messages: [...this.message_obj.messages, response]
               };
-
-              // Очистка инпута
               this.input = '';
-
-              // Обновление последнего сообщения в чате
               this.selectedChat.last_essage = response.message;
+              setTimeout(() => {
+                this.messageInput.nativeElement.focus();
+              }, 10); // Даем время Angular обновить DOM
             },
             error: (err) => console.error('Ошибка при отправке сообщения:', err),
           });
@@ -143,16 +146,37 @@ export class HomeComponent {
         error: (err) => console.error('Ошибка при создании чата:', err),
       });
     } else {
+
+      console.log(this.selectedChat)
       this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
         next: (response: any) => {
+          this.sending = false
           this.selectedChat.messages.push(response);
           this.input = '';
-          this.selectedChat.last_essage = response.message;
+          this.selectedChat.last_message = response.message;
+
+          setTimeout(() => {
+            this.messageInput.nativeElement.focus();
+          }, 10); // Даем время Angular обновить DOM
+
+          this.scrollToBottom(); // Прокрутка вниз
         },
         error: (err) => console.error('Ошибка при отправке сообщения:', err),
       });
     }
   }
+
+  scrollToBottom() {
+    setTimeout(() => {
+      if (this.messagesContainer) {
+        this.messagesContainer.nativeElement.scrollTo({
+          top: this.messagesContainer.nativeElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  }
+
 
   filterChats(type: string) {
     // this.isLoadingChats = true;
@@ -175,5 +199,12 @@ export class HomeComponent {
     const color1 = `hsl(${hash % 360}, 90%, 65%)`;  // Яркий, насыщенный цвет
     const color2 = `hsl(${(hash * 37) % 360}, 85%, 55%)`;  // Чуть темнее для контраста
     return `linear-gradient(135deg, ${color1}, ${color2})`;
+  }
+
+  logout() {
+    localStorage.clear()
+    setTimeout(() => {
+      window.location.reload();
+    }, 100)
   }
 }
