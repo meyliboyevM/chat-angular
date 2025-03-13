@@ -1,6 +1,5 @@
 import {Component, Input} from '@angular/core';
 import {NgIf} from '@angular/common';
-import {UserData} from '../../modules/home/home.component';
 
 @Component({
   selector: 'app-chat-user',
@@ -12,6 +11,5 @@ import {UserData} from '../../modules/home/home.component';
   styleUrl: './chat-user.component.scss'
 })
 export class ChatUserComponent {
-  @Input() data!: UserData
   @Input() type: 'chat' | 'contacts' | undefined
 }

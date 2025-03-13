@@ -25,8 +25,8 @@ export class HomeComponent {
 
   message: string = '';
 
-  // baseUrl = 'https://chat-backend-7t9p.onrender.com/';
-  baseUrl = 'http://127.0.0.1:8087/';
+  baseUrl = 'https://chat-backend-7t9p.onrender.com/';
+  // baseUrl = 'http://127.0.0.1:8087/';
 
   private http = inject(HttpClient);
   constructor(private wsService: WebSocketService) {}
