@@ -2,20 +2,7 @@ import {Component, ElementRef, inject, ViewChild} from '@angular/core';
 import {DatePipe, NgClass, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {HttpClient} from '@angular/common/http';
-
-
-export interface UserData {
-  id: number
-  firstName: string;
-  lastName: string;
-  status: boolean // active or inactive
-  lastMessage: string;
-  lastMessageDate: string;
-  messageCount: number
-  type: 'chat' | 'contacts',
-  avatar: string
-}
-
+import {WebSocketService} from '../../common/services/websocket.service';
 
 @Component({
   selector: 'app-home',
@@ -36,9 +23,14 @@ export class HomeComponent {
   @ViewChild('messageInput') messageInput!: ElementRef<HTMLInputElement>;
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
 
-  baseUrl = 'https://chat-backend-7t9p.onrender.com/';
+  message: string = '';
+
+  // baseUrl = 'https://chat-backend-7t9p.onrender.com/';
+  baseUrl = 'http://127.0.0.1:8087/';
 
   private http = inject(HttpClient);
+  constructor(private wsService: WebSocketService) {}
+
   selectedChat: any = null
   input = '';
   newUserChat = false;
@@ -52,7 +44,11 @@ export class HomeComponent {
   isAtBottom = true;
 
   ngOnInit() {
-    this.http.get('https://chat-backend-7t9p.onrender.com/chats').subscribe({
+
+    this.wsService.connect();
+
+
+    this.http.get(this.baseUrl + 'chats').subscribe({
       next: (data: any) => {
         this.chats = data.map((item: any) => (
           {
@@ -75,7 +71,7 @@ export class HomeComponent {
       }
     });
 
-    this.http.get('https://chat-backend-7t9p.onrender.com/users').subscribe({
+    this.http.get(this.baseUrl +'users').subscribe({
       next: (data: any) => {
         this.users = data;
         this.isLoadingUsers = false;
@@ -117,7 +113,7 @@ export class HomeComponent {
     };
 
     if (this.newUserChat) {
-      this.http.post(`https://chat-backend-7t9p.onrender.com/chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
+      this.http.post(this.baseUrl + `chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
         next: (data: any) => {
 
           // Создаём объект чата
@@ -127,7 +123,7 @@ export class HomeComponent {
           };
 
           // После создания чата сразу отправляем сообщение
-          this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
+          this.http.post(this.baseUrl + `message?target_user_id=${this.selectedChat.id}`, body).subscribe({
             next: (response: any) => {
               this.sending = false
               this.message_obj = {
@@ -148,7 +144,7 @@ export class HomeComponent {
     } else {
 
       console.log(this.selectedChat)
-      this.http.post(`https://chat-backend-7t9p.onrender.com/message?target_user_id=${this.selectedChat.id}`, body).subscribe({
+      this.http.post(this.baseUrl + `message?target_user_id=${this.selectedChat.id}`, body).subscribe({
         next: (response: any) => {
           this.sending = false
           this.selectedChat.messages.push(response);
@@ -163,6 +159,12 @@ export class HomeComponent {
         },
         error: (err) => console.error('Ошибка при отправке сообщения:', err),
       });
+    }
+
+
+    if (this.message.trim() !== '') {
+      this.wsService.sendMessage(this.message);
+      this.message = '';
     }
   }
 

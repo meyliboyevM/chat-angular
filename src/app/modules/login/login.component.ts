@@ -37,7 +37,7 @@ export class LoginComponent {
       .subscribe({
         next: (res: any) => {
           localStorage.setItem('auth_token', res['access_token']);
-          this.router.navigate(['/']);
+          this.router.navigate(['/home']);
           this.isLogin = false;
         },
         error: (err) => {

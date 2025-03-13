@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { initFlowbite } from 'flowbite';
 import {RouterOutlet} from '@angular/router';
+import {WebSocketService} from './common/services/websocket.service';
 
 @Component({
   selector: 'app-root',
@@ -10,9 +10,7 @@ import {RouterOutlet} from '@angular/router';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'chat-angular';
 
-  ngOnInit(): void {
-    initFlowbite();
-  }
+
+
 }
