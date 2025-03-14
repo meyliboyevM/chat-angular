@@ -26,10 +26,12 @@ export class HomeComponent {
   message: string = '';
 
   baseUrl = 'https://chat-backend-7t9p.onrender.com/';
-  // baseUrl = 'http://127.0.0.1:8087/';
+  // baseUrl = 'http://127.0.0.1:7000/';
 
   private http = inject(HttpClient);
-  constructor(private wsService: WebSocketService) {}
+  constructor(private wsService: WebSocketService) {
+    // this.wsService.connect()
+  }
 
   selectedChat: any = null
   input = '';
@@ -38,39 +40,26 @@ export class HomeComponent {
   chats: any = []
   isLoadingUsers = true;
   isLoadingChats = true;
-  message_obj: any = [];
+  message_obj: any = {user: {}, messages: [], last_message:''};
   sending: boolean = false
   isLoadingMessages: boolean = true;
-  isAtBottom = true;
 
   ngOnInit() {
+    this.loadChats()
+    this.loadUsers()
 
-    this.wsService.connect();
+    // Подписываемся на WebSocket-сообщения
+    this.wsService.messages$.subscribe((message) => {
+      this.input = ''; // Очищаем поле ввода
+      this.sending = false;
 
-
-    this.http.get(this.baseUrl + 'chats').subscribe({
-      next: (data: any) => {
-        this.chats = data.map((item: any) => (
-          {
-            id: item['user']['id'],
-            username: item['user']['username'],
-            phone_number: item['user']['phone_number'],
-            messages: item['messages'],
-            last_message: item['messages'].length > 0 ? item['messages'].at(-1).message : null
-          }));
-        this.isLoadingChats = false;
-        this.message_obj = this.chats[0]
-        this.selectedChat = this.chats[0];
-        this.isLoadingMessages = false;
-        this.scrollToBottom(); // Прокрутка вниз при загрузке
-
-      },
-      error: err => {
-        console.error(err);
-        this.isLoadingChats = false;
-      }
+      this.message_obj.messages.push(message)
+      this.focusing()
+      this.scrollToBottom()
     });
+  }
 
+  loadUsers() {
     this.http.get(this.baseUrl +'users').subscribe({
       next: (data: any) => {
         this.users = data;
@@ -80,94 +69,68 @@ export class HomeComponent {
     });
   }
 
-  // chats = [
-  //   { username: 'Миша Волков', lastMessage: 'Привет!', type: 'all', messages: []},
-  //   { username: 'Рамзидин', lastMessage: 'Как ты?', type: 'new', messages: []}
-  // ];
-  // users = [
-  //   { name: 'Алексей Смирнов' },
-  //   { name: 'Екатерина Иванова' },
-  //   { name: 'Павел Сидоров' }
-  // ];
+  loadChats() {
+    this.http.get(this.baseUrl + 'chats').subscribe((data: any) => {
+      this.chats = data
+      this.isLoadingChats = false;
+      this.isLoadingMessages = false;
+      this.message_obj = this.chats[0]
 
-
-  selectItem(item: any, type: boolean) {
-    this.newUserChat = type
-      this.selectedChat = item;
-    if (type) {
-      this.chats.push(item)
-      this.users = this.users.filter((el: any) => el.id !== item.id);
-    }
-      this.message_obj = {
-        user: {id: item.id, phone_number: item['phone_number'],username: item['username']},
-        messages: item['messages']
+      if (this.chats.length > 0) {
+        this.selectChat(this.chats[0]);
       }
+    });
   }
 
-  sendMessage() {
-    if (this.input.trim() === '') return;
-    this.sending = true
 
-    const body = {
+  selectChat(chat: any) {
+    this.selectedChat = chat;
+    this.wsService.connect(chat.user.id); // Переключаем WebSocket на новый чат
+    this.focusing()
+  }
+
+  selectItem(item: any, type: boolean) {
+    this.wsService.connect(item.id);
+    this.newUserChat = type;
+    this.selectedChat = item;
+
+    this.message_obj = {
+      user: {
+        id: item.id,
+        phone_number: item.phone_number,
+        username: item.username
+      },
+      messages: type ? [] : item.messages
+    };
+
+  }
+
+  sendWSMessage() {
+    if (this.input.trim() === '') return;
+    this.sending = true;
+
+    const messageData = {
+      type: this.newUserChat ? 'create_chat' : 'send_message',
+      user2_id: this.selectedChat?.user?.id || this.selectedChat?.id, // ID собеседника
       message: this.input,
     };
 
     if (this.newUserChat) {
-      this.http.post(this.baseUrl + `chats/create?user2_id=${this.selectedChat.id}`, {}).subscribe({
-        next: (data: any) => {
-
-          // Создаём объект чата
-          this.message_obj = {
-            user: data.user,
-            messages: data.messages || [],
-          };
-
-          // После создания чата сразу отправляем сообщение
-          this.http.post(this.baseUrl + `message?target_user_id=${this.selectedChat.id}`, body).subscribe({
-            next: (response: any) => {
-              this.sending = false
-              this.message_obj = {
-                ...this.message_obj,
-                messages: [...this.message_obj.messages, response]
-              };
-              this.input = '';
-              this.selectedChat.last_essage = response.message;
-              setTimeout(() => {
-                this.messageInput.nativeElement.focus();
-              }, 10); // Даем время Angular обновить DOM
-            },
-            error: (err) => console.error('Ошибка при отправке сообщения:', err),
-          });
-        },
-        error: (err) => console.error('Ошибка при создании чата:', err),
-      });
-    } else {
-
-      console.log(this.selectedChat)
-      this.http.post(this.baseUrl + `message?target_user_id=${this.selectedChat.id}`, body).subscribe({
-        next: (response: any) => {
-          this.sending = false
-          this.selectedChat.messages.push(response);
-          this.input = '';
-          this.selectedChat.last_message = response.message;
-
-          setTimeout(() => {
-            this.messageInput.nativeElement.focus();
-          }, 10); // Даем время Angular обновить DOM
-
-          this.scrollToBottom(); // Прокрутка вниз
-        },
-        error: (err) => console.error('Ошибка при отправке сообщения:', err),
-      });
+      this.loadChats()
+      this.loadUsers()
     }
 
-
-    if (this.message.trim() !== '') {
-      this.wsService.sendMessage(this.message);
-      this.message = '';
-    }
+    this.wsService.sendMessage(messageData);
+    this.focusing();
   }
 
+  focusing() {
+    setTimeout(() => {
+      this.messageInput.nativeElement.focus();
+    }, 10); // Даем время Angular обновить DOM
+
+    this.scrollToBottom(); // Прокрутка вниз
+  }
   scrollToBottom() {
     setTimeout(() => {
       if (this.messagesContainer) {
@@ -208,5 +171,9 @@ export class HomeComponent {
     setTimeout(() => {
       window.location.reload();
     }, 100)
+  }
+
+  ngOnDestroy() {
+    this.wsService.close();
   }
 }

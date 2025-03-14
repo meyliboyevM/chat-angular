@@ -36,23 +36,23 @@
     <h2 class="text-xl font-semibold mb-2">Чаты</h2>
     <div class="overflow-auto flex-1" style="max-height: 60vh;">
       <div *ngIf="isLoadingChats" class="text-center">Загрузка чатов...</div>
-      <div *ngIf="!chats.length && !isLoadingChats" class="text-center">Пусто</div>
+      <div *ngIf="(chats?.length === 0) && !isLoadingChats" class="text-center">Пусто</div>
       <div *ngFor="let item of chats" class="p-2 rounded-lg cursor-pointer hover:bg-gray-700"
            [ngClass]="{'bg-gray-700': selectedChat === item}"
            (click)="selectItem(item,false)">
         <div class="flex items-center gap-2">
           <div class="w-10 h-10 rounded-full border-2 border-gray-500"
-               [ngStyle]="{'background': generateGradient(item.phone_number)}"></div>
+               [ngStyle]="{'background': generateGradient(item?.user?.phone_number)}"></div>
           <div>
-            <div class="font-semibold">{{ item.username }}</div>
-            <div class="text-sm text-gray-400">{{ item.last_message }}</div>
+            <div class="font-semibold">{{ item?.user?.username }}</div>
+            <div class="text-sm text-gray-400">{{ item?.last_message?.message }}</div>
           </div>
         </div>
       </div>
     </div>
     <h2 class="text-xl font-semibold mt-4 mb-2">Пользователи</h2>
     <div *ngIf="isLoadingUsers" class="text-center">Загрузка...</div>
-    <div *ngIf="!users.length && !isLoadingUsers" class="text-center">Пусто</div>
+    <div *ngIf="(users?.length === 0) && !isLoadingUsers" class="text-center">Пусто</div>
     <div class="overflow-auto" style="max-height: 40vh;">
       <div *ngFor="let user of users" class="p-2 rounded-lg cursor-pointer hover:bg-gray-700"
            (click)="selectItem(user, true)">
@@ -80,7 +80,9 @@
     } @else {
 
     <div class="px-4 py-2 border-b border-gray-700 bg-gray-800 flex justify-between">
-      <h2 class="text-lg font-semibold">{{ message_obj?.user?.username || message_obj?.username || 'Выберите чат' }}</h2>
+      <h2 class="text-lg font-semibold">
+        {{ selectedChat?.user?.username || message_obj?.user?.username || 'Выберите чат' }}
+      </h2>
       <div class="flex flex-col items-center p-2 rounded-lg cursor-pointer text-red-500/50 hover:bg-gray-700" (click)="logout()">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
              viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -91,20 +93,20 @@
     </div>
 
     <div #messagesContainer class="flex-1 overflow-auto p-6 space-y-2">
-      <div *ngFor="let msg of message_obj?.messages" #lastMessage
-           [ngClass]="{'bg-indigo-700 bg-opacity-50 text-white ml-auto': msg.user_id !== selectedChat.id, 'bg-gray-700': msg.user_id === selectedChat.id}"
+      <div  *ngFor="let msg of message_obj?.messages || []" #lastMessage
+           [ngClass]="{'bg-indigo-700 bg-opacity-50 text-white ml-auto': msg.user_id !== selectedChat?.user?.id, 'bg-gray-700': msg.user_id === selectedChat?.user?.id}"
            class="p-2 rounded-lg max-w-xs">
         <div class="text-xs text-gray-300 text-right">{{ msg.created_at ? (msg.created_at | date:'hh:mm a') : '' }}</div>
         {{ msg.message }}
       </div>
     </div>
 
-    <form (ngSubmit)="sendMessage()" class="p-4 border-t border-gray-700 bg-gray-800 flex gap-2">
-      <input #messageInput [disabled]="sending || !chats.length" [(ngModel)]="input" name="message"
+    <form (ngSubmit)="sendWSMessage()" class="p-4 border-t border-gray-700 bg-gray-800 flex gap-2">
+      <input #messageInput [disabled]="sending" [(ngModel)]="input" name="message"
              class="flex-1 bg-gray-700 text-white p-2 rounded border-none"
              placeholder="Введите сообщение..."/>
 
-      <button class="bg-blue-500 text-white p-2 rounded cursor-pointer" type="submit" [disabled]="sending || !chats.length">
+      <button class="bg-blue-500 text-white p-2 rounded cursor-pointer" type="submit" [disabled]="sending">
         <svg *ngIf="!sending" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
              xmlns="http://www.w3.org/2000/svg">
           <path d="M9 12h6m0 0L9 8m6 4l-6 4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round"
