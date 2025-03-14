@@ -43,6 +43,7 @@ export class HomeComponent {
   message_obj: any = {user: {}, messages: [], last_message:''};
   sending: boolean = false
   isLoadingMessages: boolean = true;
+  chatId: number | null = null
 
   ngOnInit() {
     this.loadChats()
@@ -53,7 +54,9 @@ export class HomeComponent {
       this.input = ''; // Очищаем поле ввода
       this.sending = false;
 
-      this.message_obj.messages.push(message)
+      if (this.chatId === message.chatId) {
+        this.message_obj.messages.push(message)
+      }
       this.focusing()
       this.scrollToBottom()
     });
@@ -75,6 +78,7 @@ export class HomeComponent {
       this.isLoadingChats = false;
       this.isLoadingMessages = false;
       this.message_obj = this.chats[0]
+      this.chatId = this.chats[0].chatId
 
       if (this.chats.length > 0) {
         this.selectChat(this.chats[0]);
